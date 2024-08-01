@@ -4,6 +4,7 @@
 </div>
 
 # Ссылка для запуска:
+https://kaschenkkko.github.io/TwitchChatVote/twitch?channel=YOUR_CHANNEL_NAME
 
 # Идея и код были взяты у прекрасного человека:
 
