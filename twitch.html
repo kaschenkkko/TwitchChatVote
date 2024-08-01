@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TwitchChatBan</title>
+    <link rel="shortcut icon" href="https://i.pinimg.com/564x/86/48/ba/8648ba1bc4a414e8a65d21cfb60b48a8.jpg"/>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
+  </head>
+  <body>
+    <button id="start-button" onclick="start()" disabled>СТАРТ</button>
+    <br>
+    <div id="channel">
+        НЕ УКАЗАН TWITCH КАНАЛ!!! К текущей ссылке добавьте ?channel=НАЗВАНИЕ_КАНАЛА
+    </div>
+    <div id="main">
+      <p id="info">
+        <text id="info-text">
+          Голосование в чате!
+        </text>
+        <br>Всего голосов: <span id="counter">0</span>
+      </p>
+      <div id="score"></div>
+    </div>
+    <script src="script.js"></script>
+    <script src="twitch.js"></script>
+  </body>
+</html>
