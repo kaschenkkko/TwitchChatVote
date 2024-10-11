@@ -32,6 +32,11 @@ button:disabled {
     visibility: hidden;
 }
 
+#channel {
+    font-size: 20pt;
+    display: flex;
+}
+
 p {
     width: 100%;
     font-size: 40pt;
@@ -64,4 +69,4 @@ p {
         transform: translateY(60px);
         opacity: 0;
     }
-  }
+}

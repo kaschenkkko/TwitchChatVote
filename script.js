@@ -16,9 +16,12 @@ const params = (new URL(document.location)).searchParams;
 const channel = params.get("channel") || null;
 
 if (channel) {
-    channelEl.parentNode.removeChild(channelEl);
+    channelEl.innerHTML = `Нажмите на кнопку, чтобы начать голование в чате канала «${channel}».<br>
+                           Или измените название канала в URL-адресе.`;
     btnEl.disabled = false;
     ComfyJS.Init(channel);
+} else {
+    channelEl.innerHTML = 'Не указан twitch канал!!! К текущей ссылке добавьте ?channel=НАЗВАНИЕ_КАНАЛА';
 }
 
 function start() {
@@ -27,11 +30,16 @@ function start() {
         stop();
         return;
     }
+
+    if (channelEl) {
+        channelEl.style.display = "none";
+    }
+
     mainEl.style.visibility = "visible";
     btnEl.innerText = "СТОП";
     btnEl.style.backgroundColor = "rgb(129, 93, 93)";
 
-    infoTextEl.innerHTML = `Голосование в чате ${channel}!<br>Напишите 'да' или 'нет'<br>`;
+    infoTextEl.innerHTML = `Голосование в чате «${channel}»!<br>Напишите 'да' или 'нет'<br>`;
     started = true;
 
     timer = setInterval(onTimer, 1000);
