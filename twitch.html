@@ -8,8 +8,10 @@
     <link rel="shortcut icon" href="https://i.pinimg.com/564x/86/48/ba/8648ba1bc4a414e8a65d21cfb60b48a8.jpg"/>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
   </head>
   <body>
+    <div id="particles-js"></div>
     <button id="start-button" onclick="start()" disabled>СТАРТ</button>
     <br>
     <div id="channel"></div>
@@ -18,8 +20,12 @@
         <text id="info-text"></text>
         <br>Всего голосов: <span id="counter">0</span>
       </p>
+      <div id="time"></div>
       <div id="score"></div>
+      <div id="winner"></div>
     </div>
+    <br>
+    <img id="nyan-cat" src="http://vincentgarreau.com/particles.js/assets/img/kbLd9vb_new.gif">
     <script src="script.js"></script>
     <script src="twitch.js"></script>
   </body>

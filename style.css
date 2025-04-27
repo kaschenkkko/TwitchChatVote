@@ -10,6 +10,7 @@
 
 body {
     background-color: rgb(18, 18, 20);
+    overflow: hidden;
 }
 
 button {
@@ -17,6 +18,7 @@ button {
     text-align: center;
     line-height: 1;
     font-size: 1.06rem;
+    position: relative;
 }
 
 button:disabled {
@@ -30,6 +32,8 @@ button:disabled {
     align-items: center;
     flex-direction: column;
     visibility: hidden;
+    pointer-events: none;
+    user-select: none;
 }
 
 #channel {
@@ -43,7 +47,7 @@ p {
     text-align: center;
 }
 
-#score {
+#score, #time {
     font-size: 60pt;
     text-align: center;
 }
@@ -52,6 +56,13 @@ p {
     position: absolute;
     font-size: 2rem;
     animation: newscore 1s linear 1 forwards;
+}
+
+#winner {
+    font-size: 60pt;
+    text-align: center;
+    color: white;
+    display: none;
 }
 
 @keyframes newscore {
@@ -69,4 +80,38 @@ p {
         transform: translateY(60px);
         opacity: 0;
     }
+}
+
+#particles-js {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;  /* Используем 100% от ширины экрана */
+    height: 100vh; /* Используем 100% от высоты экрана */
+}
+
+#nyan-cat {
+    display: none;
+    position: absolute;
+    top: 80%;
+    left: 0;
+    transform: translateY(-50%);
+    height: 250px;
+    z-index: 10000;
+    pointer-events: none;
+    user-select: none;
+}
+
+@keyframes flyAcross {
+    0% {
+      left: -60vw;
+    }
+    100% {
+      left: 100vw;
+    }
+}
+  
+#nyan-cat.animate {
+    display: block;
+    animation: flyAcross 5s linear infinite;
 }
