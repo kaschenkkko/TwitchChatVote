@@ -52,12 +52,6 @@ p {
     text-align: center;
 }
 
-.new-score {
-    position: absolute;
-    font-size: 2rem;
-    animation: newscore 1s linear 1 forwards;
-}
-
 #winner {
     font-size: 60pt;
     text-align: center;

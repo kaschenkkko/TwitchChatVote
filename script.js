@@ -16,6 +16,10 @@ let animationTimer = null;
 const params = (new URL(document.location)).searchParams;
 const channel = params.get("channel") || null;
 
+document.addEventListener('contextmenu', function(event) {
+    event.preventDefault();
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     particlesJS.load('particles-js', './particlesjs-config.json', function() {
         console.log('callback - particles.js config loaded');
@@ -23,12 +27,12 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 if (channel) {
-    channelEl.innerHTML = `Нажмите на кнопку, чтобы начать голование в чате канала «${channel}».<br>
+    channelEl.innerHTML = `Нажмите на кнопку, чтобы начать голование в чате twitch-канала «${channel}».<br>
                            Или измените название канала в URL-адресе.`;
     btnEl.disabled = false;
     ComfyJS.Init(channel);
 } else {
-    channelEl.innerHTML = 'Не указан twitch канал!!! К текущей ссылке добавьте ?channel=НАЗВАНИЕ_КАНАЛА';
+    channelEl.innerHTML = 'Не указан twitch канал! К текущей ссылке добавьте «?channel=название_канала»';
 }
 
 function start() {
@@ -47,7 +51,7 @@ function start() {
     btnEl.style.backgroundColor = "rgb(129, 93, 93)";
 
     infoTextEl.innerHTML = `Голосование в чате «${channel}»!<br>
-                            Напишите «Фильм: [название фильма]» для голосования.<br>`;
+                            Напишите «Фильм: название фильма» для голосования.<br>`;
     started = true;
 
     timer = setInterval(onTimer, 1000);
@@ -59,9 +63,9 @@ function messageHandler(user, message) {
         return;
     }
 
-    // if (users.includes(user)) {
-    //     return;
-    // }
+    if (users.includes(user)) {
+        return;
+    }
 
     if (message.toLowerCase().startsWith("фильм: ")) {
         let movieTitle = message.substring(7).trim();
