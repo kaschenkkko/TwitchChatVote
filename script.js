@@ -7,14 +7,15 @@ const mainEl = document.getElementById("main");
 const btnEl = document.getElementById("start-button");
 
 let timer = null;
+let animationTimer = null;
 let started = false;
 let timerValue = 60;
+
 let users = [];
 let movieList = [];
-let animationTimer = null;
+let movieTitleCache = {};
 
-const params = (new URL(document.location)).searchParams;
-const channel = params.get("channel") || null;
+const channel = new URLSearchParams(document.location.search).get("channel");
 
 document.addEventListener('contextmenu', function(event) {
     event.preventDefault();
@@ -26,17 +27,26 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-if (channel) {
-    channelEl.innerHTML = `Нажмите на кнопку, чтобы начать голование в чате twitch-канала «${channel}».<br>
-                           Или измените название канала в URL-адресе.`;
-    btnEl.disabled = false;
-    ComfyJS.Init(channel);
-} else {
-    channelEl.innerHTML = 'Не указан twitch канал! К текущей ссылке добавьте «?channel=название_канала»';
+initChannel();
+
+
+function initChannel() {
+    if (channel) {
+        channelEl.innerHTML = `
+            Нажмите на кнопку, чтобы начать голование в чате twitch-канала
+            «${channel}».<br>Или измените название канала в URL-адресе.
+        `;
+
+        btnEl.disabled = false;
+        ComfyJS.Init(channel);
+    } else {
+        channelEl.innerHTML = `
+            Не указан twitch канал! К текущей ссылке добавьте «?channel=название_канала»
+        `;
+    }
 }
 
 function start() {
-
     if (started) {
         stop();
         return;
@@ -51,32 +61,11 @@ function start() {
     btnEl.style.backgroundColor = "rgb(129, 93, 93)";
 
     infoTextEl.innerHTML = `Голосование в чате «${channel}»!<br>
-                            Напишите «Фильм: название фильма» для голосования.<br>`;
-    started = true;
+                            Напишите ID фильма с сайта «Кинопоиск»<br>`;
 
+    started = true;
     timer = setInterval(onTimer, 1000);
     timerToTime();
-}
-
-function messageHandler(user, message) {
-    if (!started) {
-        return;
-    }
-
-    if (users.includes(user)) {
-        return;
-    }
-
-    if (message.toLowerCase().startsWith("фильм: ")) {
-        let movieTitle = message.substring(7).trim();
-
-        if (!movieList.includes(movieTitle)) {
-            movieList.push(movieTitle);
-            showNewVote(user, movieTitle);
-            users.push(user);
-            counterEl.innerText = users.length;
-        }
-    }
 }
 
 function stop() {
@@ -90,8 +79,8 @@ function stop() {
     timeEL.style.display = "none";
 
     if (users.length > 0) {
-        if (users.length === 1) {
-            showWinnerWithFireworks(movieList[0]);
+        if (movieList.length === 1) {
+            showWinner(movieList[0]);
         } else {
             startAnimation();
         }
@@ -100,6 +89,145 @@ function stop() {
     }
 
     started = false;
+}
+
+async function messageHandler(user, message) {
+    if (!started) {
+        return;
+    }
+
+    if (users.includes(user)) {
+        return;
+    }
+
+    const cleanMessage = message.trim();
+
+    if (/^[\d\s]+$/.test(cleanMessage)) {
+        const movieId = cleanMessage;
+        const movieTitle = await fetchMovieTitle(movieId);
+
+        if (!movieTitle) {
+            return;
+        }
+
+        movieList.push(movieId);
+        showNewVote(user, movieTitle);
+        users.push(user);
+        counterEl.innerText = users.length;
+    }
+}
+
+function showNewVote(user, movieTitle) {
+    let el = document.createElement("div");
+    el.className = "new-vote";
+    el.innerText = `${user} предложил фильм: ${movieTitle}`;
+
+    let y = Math.floor(Math.random() * (window.innerHeight / 3 * 2)) + 100;
+    let x = Math.floor(Math.random() * (window.innerWidth / 3 * 2)) + 80;
+
+    el.style.top = `${y}px`;
+    el.style.left = `${x}px`;
+
+    document.body.appendChild(el);
+
+    setTimeout(() => {
+        document.body.removeChild(el);
+    }, 1500);
+}
+
+/**
+ * Показывает быструю анимацию с названиями фильмов, поочередно отображая их.
+**/
+async function startAnimation() {
+    let counter = 0;
+    const uniqueMovieIds = [...new Set(movieList)];
+    const titles = await Promise.all(uniqueMovieIds.map(fetchMovieTitle));
+
+    // Создаем контейнер для анимации
+    let animationContainer = document.createElement("div");
+    animationContainer.style.position = "absolute";
+    animationContainer.style.top = "50%";
+    animationContainer.style.left = "50%";
+    animationContainer.style.transform = "translate(-50%, -50%)";
+    animationContainer.style.whiteSpace = "nowrap";
+    animationContainer.style.fontSize = "60pt";
+    animationContainer.style.fontWeight = "bold";
+    animationContainer.style.display = "flex";
+    animationContainer.style.justifyContent = "center";
+    animationContainer.style.alignItems = "center";
+    animationContainer.style.userSelect = "none";
+    document.body.appendChild(animationContainer);
+
+    // Начальное отображение первого фильма
+    let el = document.createElement("span");
+    el.className = "movie-item";
+    el.innerText = truncateTitle(titles[0]);
+    animationContainer.appendChild(el);
+
+    let interval = setInterval(() => {
+        el.innerText = truncateTitle(titles[counter % titles.length]);
+        counter++;
+    }, 100);
+
+    // Ожидаем 5 секунд, чтобы завершить анимацию, и показываем победителя
+    setTimeout(() => {
+        clearInterval(interval);
+        showWinner();
+    }, 5000);
+
+    // Убираем контейнер после окончания анимации
+    setTimeout(() => {
+        document.body.removeChild(animationContainer);
+    }, 5000);
+}
+
+/**
+ * Возвращает ID победившего фильма, учитывая количество голосов.
+ * Чем больше голосов у фильма, тем выше шанс его выбора.
+**/
+function getWeightedWinner() {
+    const counts = {};
+
+    for (const movie of movieList) {
+        counts[movie] = (counts[movie] || 0) + 1;
+    }
+
+    const weightedList = [];
+
+    for (const [movie, count] of Object.entries(counts)) {
+        for (let i = 0; i < count; i++) {
+            weightedList.push(movie);
+        }
+    }
+
+    const winner = weightedList[Math.floor(Math.random() * weightedList.length)];
+    return winner;
+}
+
+/**
+ * Показывает победителя голосования.
+**/
+async function showWinner() {
+    let winnerId = getWeightedWinner();
+    let winnerTitle = await fetchMovieTitle(winnerId);
+    let winnerEl = document.getElementById('winner');
+    winnerEl.innerHTML = `EZ для «<b>${truncateTitle(winnerTitle)}</b>»`;
+    winnerEl.style.display = "block";
+
+    const nyanCat = document.getElementById('nyan-cat').classList.add('animate');
+    nyanCat.style.display = 'block';
+    nyanCat.style.left = '0';
+
+    let position = 0;
+    const interval = setInterval(() => {
+        position += 5;
+        nyanCat.style.left = position + 'px';
+
+        if (position > window.innerWidth) {
+            clearInterval(interval);
+            nyanCat.style.display = 'none';
+        }
+    }, 16);
 }
 
 function onTimer() {
@@ -123,93 +251,37 @@ function timerToTime() {
     timeEL.innerText = text;
 }
 
-function showNewVote(user, movieTitle) {
-    let el = document.createElement("div");
-    el.className = "new-vote";
-    el.innerText = `${user} предложил фильм: ${movieTitle}`;
-
-    let y = Math.floor(Math.random() * (window.innerHeight / 3 * 2)) + 100;
-    let x = Math.floor(Math.random() * (window.innerWidth / 3 * 2)) + 80;
-
-    el.style.top = `${y}px`;
-    el.style.left = `${x}px`;
-
-    document.body.appendChild(el);
-
-    setTimeout(() => {
-        document.body.removeChild(el);
-    }, 1800);
+function truncateTitle(title, maxLength = 30) {
+    return title.length > maxLength ? title.slice(0, maxLength - 3) + "..." : title;
 }
 
-function startAnimation() {
-    let counter = 0;
-    let totalMovies = movieList.length;
+/**
+ * Функция для получения названия фильма по его ID
+ * с помощью «Kinopoisk API Unofficial».
+**/
+async function fetchMovieTitle(id) {
+    if (movieTitleCache[id]) {
+        return movieTitleCache[id];
+    }
 
-    // Создаем контейнер для анимации
-    let animationContainer = document.createElement("div");
-    animationContainer.style.position = "absolute";
-    animationContainer.style.top = "50%";
-    animationContainer.style.left = "50%";
-    animationContainer.style.transform = "translate(-50%, -50%)";
-    animationContainer.style.whiteSpace = "nowrap";
-    animationContainer.style.fontSize = "60pt";
-    animationContainer.style.fontWeight = "bold";
-    animationContainer.style.display = "flex";
-    animationContainer.style.justifyContent = "center";
-    animationContainer.style.alignItems = "center";
-    animationContainer.style.userSelect = "none";
-    document.body.appendChild(animationContainer);
+    try {
+        const res = await fetch(`https://kinopoiskapiunofficial.tech/api/v2.2/films/${id}`, {
+            method: "GET",
+            headers: {
+                "X-API-KEY": "0b5e9b54-b226-4f62-a12b-d48a095e7f38",
+                "Content-Type": "application/json",
+            }
+        });
 
-    // Начальное отображение первого фильма
-    let el = document.createElement("span");
-    el.className = "movie-item";
-    el.innerText = movieList[0];
-    animationContainer.appendChild(el);
-
-    // Начинаем анимацию фильмов
-    let interval = startMovieAnimation(el, totalMovies, counter);
-
-    // Ожидаем 5 секунд, чтобы завершить анимацию, и показываем победителя
-    setTimeout(() => {
-        clearInterval(interval); // Останавливаем анимацию
-        showWinnerWithFireworks();
-    }, 5000); // Время на анимацию (5 секунд)
-
-    // Убираем контейнер после окончания анимации
-    setTimeout(() => {
-        document.body.removeChild(animationContainer);
-    }, 5000);
-}
-
-// Функция для анимации смены фильмов
-function startMovieAnimation(el, totalMovies, counter) {
-    return setInterval(() => {
-        el.innerText = movieList[counter % totalMovies];
-        counter += 1;
-    }, 100);
-}
-
-function showWinnerWithFireworks() {
-    let winner = movieList[Math.floor(Math.random() * movieList.length)];
-    let winnerEl = document.getElementById('winner');
-    winnerEl.innerHTML = `Победил фильм: <b>${winner}</b>`;
-    winnerEl.style.display = "block";
-
-    // Показать Nyan Cat
-    const nyanCat = document.getElementById('nyan-cat').classList.add('animate');;
-    nyanCat.style.display = 'block';
-    nyanCat.style.left = '0';
-
-    // Анимация полета справа
-    let position = 0;
-    const interval = setInterval(() => {
-        position += 5; // скорость движения
-        nyanCat.style.left = position + 'px';
-
-        // Когда Nyan Cat улетит за экран
-        if (position > window.innerWidth) {
-            clearInterval(interval);
-            nyanCat.style.display = 'none';
+        if (res.status === 404) {
+            return null;
         }
-    }, 16); // примерно 60 fps
+
+        const data = await res.json();
+        const title = data?.nameRu || `${id}`;
+        movieTitleCache[id] = title;
+        return title;
+    } catch (e) {
+        return `${id}`;
+    }
 }
