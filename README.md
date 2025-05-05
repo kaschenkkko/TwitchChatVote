@@ -18,8 +18,14 @@ Twitch Chat Vote — это веб-приложение, позволяющее 
 - Поддержка различных Twitch-каналов: Приложение можно использовать для любого канала Twitch, достаточно указать его название в URL-адресе.
 
 ## Благодарность
-Идея и большая часть кода были взяты у прекрасного человека:
+- Идея и большая часть кода были взяты у прекрасного человека:
 **[declider - GitHub](https://github.com/declider)**
+
+- API для работы с «Кинопоиском»:
+**[Kinopoisk API Unofficial](https://kinopoiskapiunofficial.tech/)**
+
+- Красивый фон с частицами:
+**[VincentGarreau](https://github.com/VincentGarreau/particles.js)**
 
 ## License
 
